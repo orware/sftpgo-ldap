@@ -63,13 +63,22 @@ function authenticateUser() {
 }
 
 function createResponseObject($connectionName, $username) {
-    global $home_directories, $default_output_object;
+    global $home_directories, $virtual_folders, $default_output_object;
 
-    $userHomeDirectory = $home_directories[$connectionName] . "\\" . $username;
+    $userHomeDirectory = str_replace('#USERNAME#', $username, $home_directories[$connectionName]);
 
     $output = $default_output_object;
     $output['username'] = $username;
     $output['home_dir'] = $userHomeDirectory;
+
+    if (isset($virtual_folders[$connectionName])) {
+        $output['virtual_folders'] = $virtual_folders[$connectionName];
+
+        foreach ($output['virtual_folders'] as &$virtual_folder) {
+            $virtual_folder['name'] = str_replace('#USERNAME#', $username, $virtual_folder['name']);
+            $virtual_folder['mapped_path'] = str_replace('#USERNAME#', $username, $virtual_folder['mapped_path']);
+        }
+    }
 
     return $output;
 }
