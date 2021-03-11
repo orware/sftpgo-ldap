@@ -40,7 +40,29 @@ $connections['example'] = new Connection([
 // Create an entry for each connection you have above:
 $home_directories = [];
 
-$home_directories['example'] = 'C:\test';
+### NOTE: You may include #USERNAME# in the path you define and it will be replaced by the user's username:
+
+$home_directories['example'] = 'C:\test\#USERNAME#';
+
+// Optional: create virtual folder entries for each connection you have above:
+$virtual_folders = [];
+
+### NOTE: You may include #USERNAME# in the 'name' and 'mapped_path' values you define and it will be replaced by the user's username:
+
+// Note: that for each connection you need to provide a nested array (since you can technically define more than one virtual folder per connection):
+$virtual_folders['example'] = [
+    [
+      //"id" => 0,
+      "name" => "private-#USERNAME#",
+      "mapped_path" => 'C:\example-private\#USERNAME#',
+      //"used_quota_size" => 0,
+      //"used_quota_files" => 0,
+      //"last_quota_update" => 0,
+      "virtual_path" => "/private",
+      "quota_size" => -1,
+      "quota_files" => -1
+    ]
+];
 
 // You can make adjustments here that will be used for all of your user object responses back to SFTPGo:
 $default_output_object = array(
