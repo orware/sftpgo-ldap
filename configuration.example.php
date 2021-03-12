@@ -1,5 +1,7 @@
 <?php
 defined('_SFTPGO') or die;
+define('_SFTPGO_CLI', PHP_SAPI === 'cli');
+define("_SFTPGO_DEBUG", false);
 
 use LdapRecord\Connection;
 
