@@ -4,6 +4,10 @@ defined('_SFTPGO') or die;
 function isAllowedIP() {
     global $allowed_ips;
 
+    if (_SFTPGO_CLI) {
+        return true;
+    }
+
     $remoteIP = $_SERVER['REMOTE_ADDR'];
 
     if (array_search($remoteIP, $allowed_ips) !== false) {
@@ -14,7 +18,7 @@ function isAllowedIP() {
 }
 
 function authenticateUser() {
-    $data = getPostData();
+    $data = getData();
 
     if (!empty($data)) {
 
@@ -83,29 +87,68 @@ function createResponseObject($connectionName, $username) {
     return $output;
 }
 
-function getPostData() {
-
+function getData() {
     if (defined('_SFTPGO_DEBUG') && _SFTPGO_DEBUG === true) {
         global $debug_object;
-        $post = $debug_object;
-    } else {
-        $post = file_get_contents('php://input');
+        $data = $debug_object;
     }
 
-    $data = json_decode($post, true);
+    if (!isset($data)) {
+        $data = [];
+        if (_SFTPGO_CLI) {
+            if (isset($_ENV['SFTPGO_AUTHD_USERNAME']) && isset($_ENV['SFTPGO_AUTHD_PASSWORD'])) {
+                $username = $_ENV['SFTPGO_AUTHD_USERNAME'];
+                $password = $_ENV['SFTPGO_AUTHD_PASSWORD'];
+                $ip = $_ENV['SFTPGO_AUTHD_IP'];
+                $protocol = $_ENV['SFTPGO_AUTHD_PROTOCOL'];
+                $public_key = $_ENV['SFTPGO_AUTHD_PUBLIC_KEY'];
+                $keyboard_interactive = $_ENV['SFTPGO_AUTHD_KEYBOARD_INTERACTIVE'];
+                $tls_cert = $_ENV['SFTPGO_AUTHD_TLS_CERT'];
+
+                $data = [
+                    'username' => $username,
+                    'password' => $password,
+                    'ip' => $ip,
+                    'protocol' => $protocol,
+                    'public_key' => $public_key,
+                    'keyboard_interactive' => $keyboard_interactive,
+                    'tls_cert' => $tls_cert,
+                ];
+            }
+        } else {
+            $data = file_get_contents('php://input');
+        }
+    }
+
+    if (is_string($data)) {
+        $data = json_decode($data, true);
+    }
 
     return $data;
 }
 
 function createResponse($output) {
-    http_response_code(200);
-    header('Content-Type: application/json');
-    echo json_encode($output);
+    if (_SFTPGO_CLI) {
+        echo json_encode($output);
+    } else {
+        http_response_code(200);
+        header('Content-Type: application/json');
+        echo json_encode($output);
+    }
+
     exit;
 }
 
 function denyRequest() {
-    http_response_code(500);
+    if (_SFTPGO_CLI) {
+        $output = [
+            'username' => ''
+        ];
+        echo json_encode($output);
+    } else {
+        http_response_code(500);
+    }
+
     exit;
 }
 
