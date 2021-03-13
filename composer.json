@@ -1,5 +1,6 @@
 {
     "require": {
-        "directorytree/ldaprecord": "^2.2"
+        "directorytree/ldaprecord": "^2.2",
+        "monolog/monolog": "^2.2"
     }
 }

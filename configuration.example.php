@@ -1,9 +1,17 @@
 <?php
 defined('_SFTPGO') or die;
 define('_SFTPGO_CLI', PHP_SAPI === 'cli');
-define("_SFTPGO_DEBUG", false);
+define('_SFTPGO_LOG', false);
+define('_SFTPGO_DEBUG', false);
+define('_SFTPGO_DEBUG_ENV', false);
 
 use LdapRecord\Connection;
+use Monolog\Logger;
+use Monolog\Handler\RotatingFileHandler;
+
+// create a log channel
+$log = new Logger('name');
+$log->pushHandler(new RotatingFileHandler('logs/sftpgo-ldap.log', 30, Logger::DEBUG));
 
 // If the debug flag is set to true, please set the username/password directly for the LDAP user you want to test below:
 $debug_object = '{"username":"test","password":"test","ip":"::1","keyboard_interactive":"","protocol":"SSH","public_key":""}';
