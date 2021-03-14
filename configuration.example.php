@@ -22,6 +22,12 @@ $allowed_ips = [
     '127.0.0.1'
 ];
 
+// Special functionality to strip email domains automatically from the username if provided:
+$domains_to_strip_automatically = [
+    'imperial.edu',
+    'students.imperial.edu',
+];
+
 // Add named connection strings for each LDAP connection you want to utilize with SFTPGo:
 $connections = [];
 
