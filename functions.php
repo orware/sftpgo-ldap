@@ -83,11 +83,24 @@ function authenticateUser() {
 }
 
 function createResponseObject($connectionName, $username) {
-    global $home_directories, $virtual_folders, $default_output_object;
+    global $home_directories, $virtual_folders, $default_output_object, $connection_output_objects, $user_output_objects;
 
     $userHomeDirectory = str_replace('#USERNAME#', $username, $home_directories[$connectionName]);
 
     $output = $default_output_object;
+
+    // Connection-specific output objects override the default one:
+    if (isset($connection_output_objects[$connectionName])) {
+        logMessage('Using connection-specific output object override.');
+        $output = $connection_output_objects[$connectionName];
+    }
+
+    // Username-specific output objects override the default and connection-specific ones:
+    if (isset($user_output_objects[$username])) {
+        logMessage('Using username-specific output object override.');
+        $output = $user_output_objects[$username];
+    }
+
     $output['username'] = $username;
     $output['home_dir'] = $userHomeDirectory;
 
