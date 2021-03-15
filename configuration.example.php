@@ -22,6 +22,9 @@ $allowed_ips = [
     '127.0.0.1'
 ];
 
+// Force usernames to lowercase (helps enforce consistency when creating folder names automatically based on username):
+$convert_username_to_lowercase = true;
+
 // Special functionality to strip email domains automatically from the username if provided:
 $domains_to_strip_automatically = [
     'example.com',

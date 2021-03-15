@@ -30,7 +30,11 @@ function authenticateUser() {
     if (!empty($data)) {
 
         try {
-            global $connections, $domains_to_strip_automatically;
+            global $connections, $domains_to_strip_automatically, $convert_username_to_lowercase;
+
+            if (isset($convert_username_to_lowercase) && $convert_username_to_lowercase === true) {
+                $data['username'] = strtolower($data['username']);
+            }
 
             // Strip specific organization email domains if provided:
             if (isset($domains_to_strip_automatically)) {
