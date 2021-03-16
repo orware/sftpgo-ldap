@@ -30,10 +30,16 @@ function authenticateUser() {
     if (!empty($data)) {
 
         try {
-            global $connections, $domains_to_strip_automatically, $convert_username_to_lowercase;
+            global $connections, $domains_to_strip_automatically, $convert_username_to_lowercase, $username_minimum_length, $username_blacklist;
 
+            // Convert username to lowercase if setting is enabled:
             if (isset($convert_username_to_lowercase) && $convert_username_to_lowercase === true) {
+                $beforeUsername = $data['username'];
                 $data['username'] = strtolower($data['username']);
+
+                if ($beforeUsername !== $data['username']) {
+                    logMessage('Converted ' . $beforeUsername . ' to ' . $data['username']);
+                }
             }
 
             // Strip specific organization email domains if provided:
@@ -43,6 +49,22 @@ function authenticateUser() {
                     $domain = '@'.str_replace('@', '', $domain);
                     logMessage('Attempting to strip ' . $domain . ' from provided username.');
                     $data['username'] = str_replace($domain, '', $data['username']);
+                }
+            }
+
+            // Prevent short usernames from being processed:
+            if (isset($username_minimum_length) && $username_minimum_length > 0) {
+                if (strlen($data['username']) < $username_minimum_length) {
+                    logMessage('Denying ' . $data['username'] . ' since length is less than minimum allowed (' . $username_minimum_length . ')');
+                    denyRequest();
+                }
+            }
+
+            // Prevent blacklisted usernames from being processed:
+            if (isset($username_blacklist) && !empty($username_blacklist)) {
+                if (array_search($data['username'], $username_blacklist) !== false) {
+                    logMessage('Denying ' . $data['username'] . ' since it is in the username blacklist');
+                    denyRequest();
                 }
             }
 
