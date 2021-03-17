@@ -172,6 +172,42 @@ $user_output_objects['example_username'] = [
     'public_keys' => [],
 ];
 
+// If automatic groups mode is disabled, then you have to manually add the allowed groups into $allowed_groups down below:
+// If enabled, then any groups you are a memberof will automatically be added in using the template below.
+$auto_groups_mode = false;
+
+$auto_groups_mode_virtual_folder_template = [
+    [
+      //"id" => 0,
+      "name" => "groups-#GROUP#",
+      "mapped_path" => 'C:\groups\#GROUP#',
+      //"used_quota_size" => 0,
+      //"used_quota_files" => 0,
+      //"last_quota_update" => 0,
+      "virtual_path" => "/groups/#GROUP#",
+      "quota_size" => -1,
+      "quota_files" => -1
+    ]
+];
+
+// List of groups where a virtual folder will be created and associated with any group members:
+$allowed_groups = [];
+
+// Note: that for each group you need to provide a nested array (this allows for more than one virtual folder per group to be defined):
+$allowed_groups['example'] = [
+    [
+      //"id" => 0,
+      "name" => "groups-#GROUP#",
+      "mapped_path" => 'C:\groups\#GROUP#',
+      //"used_quota_size" => 0,
+      //"used_quota_files" => 0,
+      //"last_quota_update" => 0,
+      "virtual_path" => "/groups/#GROUP#",
+      "quota_size" => -1,
+      "quota_files" => -1
+    ]
+];
+
 // Add a minimum length for usernames (set to 0 to ignore length):
 $username_minimum_length = 4;
 

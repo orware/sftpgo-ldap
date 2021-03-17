@@ -92,9 +92,11 @@ function authenticateUser() {
 
                     logMessage('Before authentication attempt for: ' . $data['username']);
                     if ($connection->auth()->attempt($userDistinguishedName, $data['password'])) {
+                        $groups = getUserGroups($user);
+
                         // User has been successfully authenticated.
                         logMessage('After authentication attempt for: ' . $data['username'] . ' (success!)');
-                        $output = createResponseObject($connectionName, $data['username']);
+                        $output = createResponseObject($connectionName, $data['username'], $groups);
 
                         logMessage('Disconnecting from ' . $connectionName);
                         $connection->disconnect();
@@ -128,8 +130,15 @@ function authenticateUser() {
     denyRequest();
 }
 
-function createResponseObject($connectionName, $username) {
-    global $home_directories, $virtual_folders, $default_output_object, $connection_output_objects, $user_output_objects;
+function createResponseObject($connectionName, $username, $groups = []) {
+    global $home_directories,
+           $virtual_folders,
+           $default_output_object,
+           $connection_output_objects,
+           $user_output_objects,
+           $allowed_groups,
+           $auto_groups_mode,
+           $auto_groups_mode_virtual_folder_template;
 
     $userHomeDirectory = str_replace('#USERNAME#', $username, $home_directories[$connectionName]);
 
@@ -156,6 +165,45 @@ function createResponseObject($connectionName, $username) {
         foreach ($output['virtual_folders'] as &$virtual_folder) {
             $virtual_folder['name'] = str_replace('#USERNAME#', $username, $virtual_folder['name']);
             $virtual_folder['mapped_path'] = str_replace('#USERNAME#', $username, $virtual_folder['mapped_path']);
+        }
+    }
+
+    // Support for automatically creating virtual folders for allowed groups the user may be a member of:
+    if (!empty($groups)) {
+        if ($auto_groups_mode) {
+            foreach($groups as $group) {
+                if (isset($auto_groups_mode_virtual_folder_template)) {
+                    foreach($auto_groups_mode_virtual_folder_template as $virtual_group_folder) {
+
+                        $virtual_group_folder['name'] = str_replace('#GROUP#', $group, $virtual_group_folder['name']);
+                        $virtual_group_folder['mapped_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['mapped_path']);
+                        $virtual_group_folder['virtual_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['virtual_path']);
+
+                        $output['virtual_folders'][] = $virtual_group_folder;
+
+                        // Defaulting to open permissions on the virtual group folder:
+                        $output['permissions'][$virtual_group_folder['virtual_path']] = ["*"];
+                    }
+                }
+            }
+        } else {
+            if (!empty($allowed_groups)) {
+                foreach($groups as $group) {
+                    if (isset($allowed_groups[$group])) {
+                        foreach($allowed_groups[$group] as $virtual_group_folder) {
+
+                            $virtual_group_folder['name'] = str_replace('#GROUP#', $group, $virtual_group_folder['name']);
+                            $virtual_group_folder['mapped_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['mapped_path']);
+                            $virtual_group_folder['virtual_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['virtual_path']);
+
+                            $output['virtual_folders'][] = $virtual_group_folder;
+
+                            // Defaulting to open permissions on the virtual group folder:
+                            $output['permissions'][$virtual_group_folder['virtual_path']] = ["*"];
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -271,6 +319,39 @@ function homeDirectoryEntriesExist() {
             echo "Missing Home Directory Entry for: " . $connectionName . '<br />';
         }
     }
+}
+
+function getUserGroups($user) {
+    $groups = array();
+
+    if (isset($user['memberof'])) {
+        if (isset($user['memberof']['count'])) {
+            unset($user['memberof']['count']);
+        }
+
+        foreach($user['memberof'] as $group) {
+            $group = str_replace('CN=', '', $group);
+
+            $endGroupName = strpos($group, ',OU');
+
+            $group = substr($group, 0, $endGroupName);
+
+            // Perform uniformity transformations:
+            $group = strtolower($group);
+            $group = str_replace('#', '', $group);
+            $group = str_replace('(', '', $group);
+            $group = str_replace(')', '', $group);
+            $group = str_replace(' ', '-', $group);
+            $group = str_replace('&', 'and', $group);
+            $group = preg_replace('/[^a-zA-Z0-9\-\._]/','', $group);
+
+            if (!empty($group)) {
+                $groups[] = $group;
+            }
+        }
+    }
+
+    return $groups;
 }
 
 function logMessage($message, $extra = []) {
