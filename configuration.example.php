@@ -174,7 +174,7 @@ $user_output_objects['example_username'] = [
 
 // If automatic groups mode is disabled, then you have to manually add the allowed groups into $allowed_groups down below:
 // If enabled, then any groups you are a memberof will automatically be added in using the template below.
-$auto_groups_mode = false;
+$auto_groups_mode = true;
 
 $auto_groups_mode_virtual_folder_template = [
     [
@@ -188,6 +188,14 @@ $auto_groups_mode_virtual_folder_template = [
       "quota_size" => -1,
       "quota_files" => -1
     ]
+];
+
+// Used only when auto groups mode is enabled and will help prevent all your groups from being
+// added into SFTPGo since only groups with the prefixes defined here will be automatically added
+// with prefixes automatically removed when listed as a virtual folder (e.g. a group with name
+// "sftpgo-example" would simply become "example").
+$allowed_group_prefixes = [
+    'sftpgo-'
 ];
 
 // List of groups where a virtual folder will be created and associated with any group members:

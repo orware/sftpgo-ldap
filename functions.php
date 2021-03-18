@@ -138,7 +138,8 @@ function createResponseObject($connectionName, $username, $groups = []) {
            $user_output_objects,
            $allowed_groups,
            $auto_groups_mode,
-           $auto_groups_mode_virtual_folder_template;
+           $auto_groups_mode_virtual_folder_template,
+           $allowed_group_prefixes;
 
     $userHomeDirectory = str_replace('#USERNAME#', $username, $home_directories[$connectionName]);
 
@@ -172,17 +173,32 @@ function createResponseObject($connectionName, $username, $groups = []) {
     if (!empty($groups)) {
         if ($auto_groups_mode) {
             foreach($groups as $group) {
-                if (isset($auto_groups_mode_virtual_folder_template)) {
-                    foreach($auto_groups_mode_virtual_folder_template as $virtual_group_folder) {
 
-                        $virtual_group_folder['name'] = str_replace('#GROUP#', $group, $virtual_group_folder['name']);
-                        $virtual_group_folder['mapped_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['mapped_path']);
-                        $virtual_group_folder['virtual_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['virtual_path']);
+                $allowed = true;
 
-                        $output['virtual_folders'][] = $virtual_group_folder;
+                if (!empty($allowed_group_prefixes)) {
+                    $allowed = false;
+                    foreach($allowed_group_prefixes as $allowed_group_prefix) {
+                        if (strpos($group, $allowed_group_prefix) === 0) {
+                            $allowed = true;
+                            $group = str_replace($allowed_group_prefix, '', $group);
+                        }
+                    }
+                }
 
-                        // Defaulting to open permissions on the virtual group folder:
-                        $output['permissions'][$virtual_group_folder['virtual_path']] = ["*"];
+                if ($allowed) {
+                    if (isset($auto_groups_mode_virtual_folder_template)) {
+                        foreach($auto_groups_mode_virtual_folder_template as $virtual_group_folder) {
+
+                            $virtual_group_folder['name'] = str_replace('#GROUP#', $group, $virtual_group_folder['name']);
+                            $virtual_group_folder['mapped_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['mapped_path']);
+                            $virtual_group_folder['virtual_path'] = str_replace('#GROUP#', $group, $virtual_group_folder['virtual_path']);
+
+                            $output['virtual_folders'][] = $virtual_group_folder;
+
+                            // Defaulting to open permissions on the virtual group folder:
+                            $output['permissions'][$virtual_group_folder['virtual_path']] = ["*"];
+                        }
                     }
                 }
             }
