@@ -160,6 +160,32 @@ function createResponseObject($connectionName, $username, $groups = []) {
     $output['username'] = $username;
     $output['home_dir'] = $userHomeDirectory;
 
+    // Allow for username-specific folders in Remote SFTP Proxy:
+    if (isset($output['filesystem']['sftpconfig'])) {
+        logMessage('Reviewing Remote SFTP Config for user to see if username replacement is needed');
+
+        // Home Directory doesn't seem needed when using Remote SFTP Proxy option:
+        $output['home_dir'] = '';
+
+        $output['filesystem']['sftpconfig']['endpoint'] = str_replace('#USERNAME#', $username, $output['filesystem']['sftpconfig']['endpoint']);
+        $output['filesystem']['sftpconfig']['username'] = str_replace('#USERNAME#', $username, $output['filesystem']['sftpconfig']['username']);
+
+        if ($output['filesystem']['sftpconfig']['password']['status'] === 'Plain') {
+            if (strpos($output['filesystem']['sftpconfig']['password']['payload'], '#PASSWORD#') === 0) {
+                logMessage('Retrieving User Password from Request for Dynamic Replacement');
+                $data = getData();
+                $password = $data['password'];
+                unset($data);
+                logMessage('Retrieved User Password from Request for Dynamic Replacement');
+
+                $output['filesystem']['sftpconfig']['password']['payload'] = str_replace('#PASSWORD#', $password, $output['filesystem']['sftpconfig']['password']['payload']);
+            }
+        }
+
+        $output['filesystem']['sftpconfig']['password']['additional_data'] = str_replace('#USERNAME#', $username, $output['filesystem']['sftpconfig']['password']['additional_data']);
+        $output['filesystem']['sftpconfig']['prefix'] = str_replace('#USERNAME#', $username, $output['filesystem']['sftpconfig']['prefix']);
+    }
+
     if (isset($virtual_folders[$connectionName])) {
         $output['virtual_folders'] = $virtual_folders[$connectionName];
 
